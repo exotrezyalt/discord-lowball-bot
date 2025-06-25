@@ -373,64 +373,76 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // NEW: SETUP REACTION ROLES COMMAND
-    else if (interaction.commandName === 'setup-reaction-roles') {
-        // Check if user has admin permissions
-        if (!interaction.member.permissions.has('Administrator')) {
+// NEW: SETUP REACTION ROLES COMMAND
+else if (interaction.commandName === 'setup-reaction-roles') {
+    // Check if user has admin permissions
+    if (!interaction.member.permissions.has('Administrator')) {
+        await interaction.reply({ 
+            content: '❌ You need Administrator permission to use this command!', 
+            ephemeral: true 
+        });
+        return;
+    }
+
+    try {
+        // Find the lowball role first
+        const role = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === LOWBALL_ROLE_NAME.toLowerCase());
+        
+        if (!role) {
             await interaction.reply({ 
-                content: '❌ You need Administrator permission to use this command!', 
+                content: `❌ Could not find the "${LOWBALL_ROLE_NAME}" role. Please make sure it exists first!`, 
                 ephemeral: true 
             });
             return;
         }
 
-        try {
-            // Get custom title and description, or use defaults
-            const title = interaction.options.getString('title') || 'Facebook Lowball Method';
-            const description = interaction.options.getString('description') || 
-                'Use the green button below to claim your role. Use the red one if you got the role but then decided to remove it or if you don\'t want to get pings from it.';
+        // Get custom title and description, or use defaults
+        const title = interaction.options.getString('title') || 'Facebook Lowball Method';
+        const description = interaction.options.getString('description') || 
+            'Use the green button below to claim your role. Use the red one if you got the role but then decided to remove it or if you don\'t want to get pings from it.';
 
-            // Create embed
-            const embed = new EmbedBuilder()
-                .setColor(0x2F3136)
-                .setTitle(title)
-                .setDescription(`${description}\n\n@${LOWBALL_ROLE_NAME}\n\nUse the button below!`)
-                .setThumbnail('https://cdn.discordapp.com/emojis/1234567890123456789.png?v=1'); // You can replace this with your star emoji URL
+        // Create embed with proper role mention
+        const embed = new EmbedBuilder()
+            .setColor(0x2F3136)
+            .setTitle(title)
+            .setDescription(`${description}\n\n<@&${role.id}>\n\nUse the button below!`)
+            .setTimestamp();
 
-            // Create buttons
-            const addRoleButton = new ButtonBuilder()
-                .setCustomId('add_lowball_role')
-                .setLabel('I Add the role!')
-                .setStyle(ButtonStyle.Success)
-                .setEmoji('⭐'); // You can change this emoji
+        // Create buttons
+        const addRoleButton = new ButtonBuilder()
+            .setCustomId('add_lowball_role')
+            .setLabel('Add the role!')
+            .setStyle(ButtonStyle.Success)
+            .setEmoji('⭐');
 
-            const removeRoleButton = new ButtonBuilder()
-                .setCustomId('remove_lowball_role')
-                .setLabel('Remove role / No more pings')
-                .setStyle(ButtonStyle.Danger);
+        const removeRoleButton = new ButtonBuilder()
+            .setCustomId('remove_lowball_role')
+            .setLabel('Remove role / No more pings')
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji('❌');
 
-            const actionRow = new ActionRowBuilder()
-                .addComponents(addRoleButton, removeRoleButton);
+        const actionRow = new ActionRowBuilder()
+            .addComponents(addRoleButton, removeRoleButton);
 
-            // Send the message
-            await interaction.channel.send({
-                embeds: [embed],
-                components: [actionRow]
-            });
+        // Send the message
+        await interaction.channel.send({
+            embeds: [embed],
+            components: [actionRow]
+        });
 
-            await interaction.reply({ 
-                content: '✅ Reaction roles message has been set up successfully!', 
-                ephemeral: true 
-            });
+        await interaction.reply({ 
+            content: '✅ Reaction roles message has been set up successfully!', 
+            ephemeral: true 
+        });
 
-        } catch (error) {
-            console.error('Error setting up reaction roles:', error);
-            await interaction.reply({ 
-                content: '❌ There was an error setting up reaction roles. Please try again.', 
-                ephemeral: true 
-            });
-        }
+    } catch (error) {
+        console.error('Error setting up reaction roles:', error);
+        await interaction.reply({ 
+            content: '❌ There was an error setting up reaction roles. Please try again.', 
+            ephemeral: true 
+        });
     }
+}
 });
 
 // Handle button interactions for reaction roles
