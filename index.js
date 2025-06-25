@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const express = require('express');
 require('dotenv').config();
 
@@ -58,6 +58,7 @@ const client = new Client({
 // Configuration - Load from environment variables
 const LOWBALL_CHANNEL_ID = process.env.LOWBALL_CHANNEL_ID;
 const AUTO_DELETE_CHANNEL_ID = process.env.AUTO_DELETE_CHANNEL_ID; // New channel for auto-deleting non-admin messages
+const LOWBALL_ROLE_NAME = process.env.LOWBALL_ROLE_NAME || 'lowball'; // Default role name
 
 // When the client is ready, run this code
 client.once('ready', async () => {
@@ -126,6 +127,21 @@ client.once('ready', async () => {
                     .setRequired(false)
                     .setMinValue(1)
                     .setMaxValue(100)
+            ),
+        
+        // NEW: Reaction roles setup command
+        new SlashCommandBuilder()
+            .setName('setup-reaction-roles')
+            .setDescription('Setup reaction roles for the lowball role (Admin only)')
+            .addStringOption(option =>
+                option.setName('title')
+                    .setDescription('Title for the reaction role message')
+                    .setRequired(false)
+            )
+            .addStringOption(option =>
+                option.setName('description')
+                    .setDescription('Description for the reaction role message')
+                    .setRequired(false)
             )
     ];
 
@@ -205,7 +221,8 @@ client.on('interactionCreate', async interaction => {
                 { name: '/clear [amount]', value: 'Delete messages (1-100)', inline: false },
                 { name: '/userinfo [user]', value: 'Get info about a user', inline: false },
                 { name: '/say [message]', value: 'Make the bot say something', inline: false },
-                { name: '/purge [amount]', value: 'Delete messages from users without admin role', inline: false }
+                { name: '/purge [amount]', value: 'Delete messages from users without admin role', inline: false },
+                { name: '/setup-reaction-roles', value: 'Setup reaction roles for lowball role (Admin only)', inline: false }
             )
             .setTimestamp();
 
@@ -352,6 +369,124 @@ client.on('interactionCreate', async interaction => {
             console.error('Error in purge command:', error);
             await interaction.editReply({ 
                 content: '❌ There was an error purging messages. Make sure I have permission to delete messages in this channel.'
+            });
+        }
+    }
+
+    // NEW: SETUP REACTION ROLES COMMAND
+    else if (interaction.commandName === 'setup-reaction-roles') {
+        // Check if user has admin permissions
+        if (!interaction.member.permissions.has('Administrator')) {
+            await interaction.reply({ 
+                content: '❌ You need Administrator permission to use this command!', 
+                ephemeral: true 
+            });
+            return;
+        }
+
+        try {
+            // Get custom title and description, or use defaults
+            const title = interaction.options.getString('title') || 'Facebook Lowball Method';
+            const description = interaction.options.getString('description') || 
+                'Use the green button below to claim your role. Use the red one if you got the role but then decided to remove it or if you don\'t want to get pings from it.';
+
+            // Create embed
+            const embed = new EmbedBuilder()
+                .setColor(0x2F3136)
+                .setTitle(title)
+                .setDescription(`${description}\n\n@${LOWBALL_ROLE_NAME}\n\nUse the button below!`)
+                .setThumbnail('https://cdn.discordapp.com/emojis/1234567890123456789.png?v=1'); // You can replace this with your star emoji URL
+
+            // Create buttons
+            const addRoleButton = new ButtonBuilder()
+                .setCustomId('add_lowball_role')
+                .setLabel('I Add the role!')
+                .setStyle(ButtonStyle.Success)
+                .setEmoji('⭐'); // You can change this emoji
+
+            const removeRoleButton = new ButtonBuilder()
+                .setCustomId('remove_lowball_role')
+                .setLabel('Remove role / No more pings')
+                .setStyle(ButtonStyle.Danger);
+
+            const actionRow = new ActionRowBuilder()
+                .addComponents(addRoleButton, removeRoleButton);
+
+            // Send the message
+            await interaction.channel.send({
+                embeds: [embed],
+                components: [actionRow]
+            });
+
+            await interaction.reply({ 
+                content: '✅ Reaction roles message has been set up successfully!', 
+                ephemeral: true 
+            });
+
+        } catch (error) {
+            console.error('Error setting up reaction roles:', error);
+            await interaction.reply({ 
+                content: '❌ There was an error setting up reaction roles. Please try again.', 
+                ephemeral: true 
+            });
+        }
+    }
+});
+
+// Handle button interactions for reaction roles
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isButton()) return;
+
+    // Handle lowball role buttons
+    if (interaction.customId === 'add_lowball_role' || interaction.customId === 'remove_lowball_role') {
+        try {
+            // Find the lowball role
+            const role = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === LOWBALL_ROLE_NAME.toLowerCase());
+            
+            if (!role) {
+                await interaction.reply({ 
+                    content: `❌ Could not find the "${LOWBALL_ROLE_NAME}" role. Please make sure it exists and the bot can see it.`, 
+                    ephemeral: true 
+                });
+                return;
+            }
+
+            const member = interaction.member;
+            const hasRole = member.roles.cache.has(role.id);
+
+            if (interaction.customId === 'add_lowball_role') {
+                if (hasRole) {
+                    await interaction.reply({ 
+                        content: `❌ You already have the ${role.name} role!`, 
+                        ephemeral: true 
+                    });
+                } else {
+                    await member.roles.add(role);
+                    await interaction.reply({ 
+                        content: `✅ You have been given the ${role.name} role!`, 
+                        ephemeral: true 
+                    });
+                }
+            } else if (interaction.customId === 'remove_lowball_role') {
+                if (!hasRole) {
+                    await interaction.reply({ 
+                        content: `❌ You don't have the ${role.name} role to remove!`, 
+                        ephemeral: true 
+                    });
+                } else {
+                    await member.roles.remove(role);
+                    await interaction.reply({ 
+                        content: `✅ The ${role.name} role has been removed from you!`, 
+                        ephemeral: true 
+                    });
+                }
+            }
+
+        } catch (error) {
+            console.error('Error handling role button:', error);
+            await interaction.reply({ 
+                content: '❌ There was an error processing your request. Please make sure the bot has permission to manage roles.', 
+                ephemeral: true 
             });
         }
     }
