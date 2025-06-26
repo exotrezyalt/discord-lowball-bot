@@ -532,7 +532,7 @@ client.on('interactionCreate', async interaction => {
 
 # **Lowball this ${car}!**
 
-This is a **${car}** for **<@${user.id}>** and you guys need to lowball the person for **${price}**. Here is the marketplace link **${<link>}**`;
+This is a **${car}** for **<@${user.id}>** and you guys need to lowball the person for **${price}**. Here is the marketplace link **<${link}>**`;
 
             // Send the message to the designated channel
             await channel.send(message);
