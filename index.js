@@ -45,6 +45,18 @@ const keepAlive = () => {
         }
     }, 14 * 60 * 1000); // Every 14 minutes
 };
+// Watchdog to check if bot is online and reconnect if offline
+const botWatchdog = () => {
+    setInterval(() => {
+        if (!client.isReady()) {
+            console.log('⚠️ Bot is offline. Attempting to reconnect...');
+            client.destroy();
+            client.login(process.env.DISCORD_TOKEN)
+                .then(() => console.log('✅ Bot reconnected successfully!'))
+                .catch(err => console.error('❌ Reconnection failed:', err));
+        }
+    }, 60 * 1000); // Check every 60 seconds
+};
 
 // Create a new client instance
 const client = new Client({ 
@@ -67,7 +79,13 @@ client.once('ready', async () => {
     // Start keep-alive mechanism
     keepAlive();
     console.log('Keep-alive mechanism started');
+
+    // Start watchdog to auto-reconnect if bot goes offline
+    botWatchdog();
+    console.log('Bot watchdog started');
     
+    // ...rest of your slash command registration code
+});
     // Register ALL slash commands here
     const commands = [
         // Lowball command
@@ -595,8 +613,21 @@ client.on('error', error => {
     console.error('Discord client error:', error);
 });
 
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception thrown:', error);
+});
+
+
+
 // Login to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);
 
 // Export for testing purposes
 module.exports = { client };
+
