@@ -1,6 +1,20 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
+const express = require('express');
 
+// Start Express server so Render doesn't kill the process
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.json({ status: 'running', bot: client.isReady() ? 'online' : 'offline' });
+});
+
+app.listen(PORT, () => {
+    console.log(`Health server running on port ${PORT}`);
+});
+
+// Now start the bot
 console.log('Starting minimal bot test...');
 console.log('Token exists:', !!process.env.DISCORD_TOKEN);
 console.log('Token length:', process.env.DISCORD_TOKEN?.length);
