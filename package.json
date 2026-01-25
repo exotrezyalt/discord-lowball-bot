@@ -1,9 +1,9 @@
 {
   "name": "lowball-bot",
   "version": "1.0.0",
-  "main": "test-bot.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node test-bot.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^14.16.3",
