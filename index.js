@@ -45,18 +45,6 @@ const keepAlive = () => {
         }
     }, 14 * 60 * 1000); // Every 14 minutes
 };
-// Watchdog to check if bot is online and reconnect if offline
-const botWatchdog = () => {
-    setInterval(() => {
-        if (!client.isReady()) {
-            console.log('⚠️ Bot is offline. Attempting to reconnect...');
-            client.destroy();
-            client.login(process.env.DISCORD_TOKEN)
-                .then(() => console.log('✅ Bot reconnected successfully!'))
-                .catch(err => console.error('❌ Reconnection failed:', err));
-        }
-    }, 60 * 1000); // Check every 60 seconds
-};
 
 // Create a new client instance
 const client = new Client({ 
@@ -73,23 +61,31 @@ const AUTO_DELETE_CHANNEL_ID = process.env.AUTO_DELETE_CHANNEL_ID; // New channe
 const LOWBALL_ROLE_NAME = process.env.LOWBALL_ROLE_NAME || 'lowball'; // Default role name
 
 // When the client is ready, run this code
-// When the client is ready, run this code
 client.once('ready', async () => {
     console.log(`Ready! Logged in as ${client.user.tag}`);
     
     // Start keep-alive mechanism
     keepAlive();
     console.log('Keep-alive mechanism started');
-
-    // Start watchdog to auto-reconnect if bot goes offline
-    botWatchdog();
-    console.log('Bot watchdog started');
-
+    
     // Register ALL slash commands here
     const commands = [
-        new SlashCommandBuilder().setName('lowballmethod').setDescription('Submit a car for lowballing'),
-        new SlashCommandBuilder().setName('ping').setDescription('Check if the bot is working'),
-        new SlashCommandBuilder().setName('help').setDescription('Show all available commands'),
+        // Lowball command
+        new SlashCommandBuilder()
+            .setName('lowballmethod')
+            .setDescription('Submit a car for lowballing'),
+        
+        // Ping command (simple example)
+        new SlashCommandBuilder()
+            .setName('ping')
+            .setDescription('Check if the bot is working'),
+        
+        // Help command
+        new SlashCommandBuilder()
+            .setName('help')
+            .setDescription('Show all available commands'),
+        
+        // Clear command (deletes messages)
         new SlashCommandBuilder()
             .setName('clear')
             .setDescription('Clear messages from this channel')
@@ -100,6 +96,8 @@ client.once('ready', async () => {
                     .setMinValue(1)
                     .setMaxValue(100)
             ),
+        
+        // User info command
         new SlashCommandBuilder()
             .setName('userinfo')
             .setDescription('Get information about a user')
@@ -108,6 +106,8 @@ client.once('ready', async () => {
                     .setDescription('The user to get info about')
                     .setRequired(false)
             ),
+        
+        // Say command (bot repeats what you type)
         new SlashCommandBuilder()
             .setName('say')
             .setDescription('Make the bot say something')
@@ -116,6 +116,8 @@ client.once('ready', async () => {
                     .setDescription('What you want the bot to say')
                     .setRequired(true)
             ),
+        
+        // Purge command (delete messages from non-admins)
         new SlashCommandBuilder()
             .setName('purge')
             .setDescription('Delete all messages from users without admin role')
@@ -126,6 +128,8 @@ client.once('ready', async () => {
                     .setMinValue(1)
                     .setMaxValue(100)
             ),
+        
+        // NEW: Reaction roles setup command
         new SlashCommandBuilder()
             .setName('setup-reaction-roles')
             .setDescription('Setup reaction roles for the lowball role (Admin only)')
@@ -141,18 +145,16 @@ client.once('ready', async () => {
             )
     ];
 
-    // ⚡ Wrap the registration in an async IIFE so await works
-    (async () => {
-        try {
-            for (const command of commands) {
-                await client.application.commands.create(command);
-            }
-            console.log('All slash commands registered successfully!');
-        } catch (error) {
-            console.error('Error registering slash commands:', error);
+    try {
+        for (const command of commands) {
+            await client.application.commands.create(command);
         }
-    })();
+        console.log('All slash commands registered successfully!');
+    } catch (error) {
+        console.error('Error registering slash commands:', error);
+    }
 });
+
 // Handle slash command interactions
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
@@ -593,22 +595,8 @@ client.on('error', error => {
     console.error('Discord client error:', error);
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception thrown:', error);
-});
-
-
-
 // Login to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);
 
 // Export for testing purposes
 module.exports = { client };
-
-
