@@ -595,39 +595,8 @@ client.on('error', error => {
     console.error('Discord client error:', error);
 });
 
-client.login(process.env.DISCORD_TOKEN)
-    .then(() => {
-        console.log('Login attempt successful - waiting for ready event...');
-    })
-    .catch(error => {
-        console.error('❌ CRITICAL ERROR - Failed to login to Discord!');
-        console.error('Error Code:', error.code);
-        console.error('Error Message:', error.message);
-        console.error('Full Error:', JSON.stringify(error, null, 2));
-        
-        // Common error codes:
-        if (error.code === 'TOKEN_INVALID') {
-            console.error('>> Your bot token is invalid. Generate a new one from Discord Developer Portal.');
-        } else if (error.code === 'DISALLOWED_INTENTS') {
-            console.error('>> You need to enable Privileged Gateway Intents in Discord Developer Portal.');
-        }
-        
-        process.exit(1);
-    });
-
-// Also add a timeout to detect if ready event never fires
-setTimeout(() => {
-    if (!client.isReady()) {
-        console.error('❌ TIMEOUT: Bot did not become ready within 30 seconds!');
-        console.error('This usually means:');
-        console.error('1. Invalid bot token');
-        console.error('2. Missing privileged intents');
-        console.error('3. Network connectivity issues');
-        process.exit(1);
-    }
-}, 30000);
+// Login to Discord with your client's token
+client.login(process.env.DISCORD_TOKEN);
 
 // Export for testing purposes
 module.exports = { client };
-
-
