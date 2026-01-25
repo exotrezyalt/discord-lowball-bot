@@ -73,6 +73,7 @@ const AUTO_DELETE_CHANNEL_ID = process.env.AUTO_DELETE_CHANNEL_ID; // New channe
 const LOWBALL_ROLE_NAME = process.env.LOWBALL_ROLE_NAME || 'lowball'; // Default role name
 
 // When the client is ready, run this code
+// When the client is ready, run this code
 client.once('ready', async () => {
     console.log(`Ready! Logged in as ${client.user.tag}`);
     
@@ -83,27 +84,12 @@ client.once('ready', async () => {
     // Start watchdog to auto-reconnect if bot goes offline
     botWatchdog();
     console.log('Bot watchdog started');
-    
-    // ...rest of your slash command registration code
-});
+
     // Register ALL slash commands here
     const commands = [
-        // Lowball command
-        new SlashCommandBuilder()
-            .setName('lowballmethod')
-            .setDescription('Submit a car for lowballing'),
-        
-        // Ping command (simple example)
-        new SlashCommandBuilder()
-            .setName('ping')
-            .setDescription('Check if the bot is working'),
-        
-        // Help command
-        new SlashCommandBuilder()
-            .setName('help')
-            .setDescription('Show all available commands'),
-        
-        // Clear command (deletes messages)
+        new SlashCommandBuilder().setName('lowballmethod').setDescription('Submit a car for lowballing'),
+        new SlashCommandBuilder().setName('ping').setDescription('Check if the bot is working'),
+        new SlashCommandBuilder().setName('help').setDescription('Show all available commands'),
         new SlashCommandBuilder()
             .setName('clear')
             .setDescription('Clear messages from this channel')
@@ -114,8 +100,6 @@ client.once('ready', async () => {
                     .setMinValue(1)
                     .setMaxValue(100)
             ),
-        
-        // User info command
         new SlashCommandBuilder()
             .setName('userinfo')
             .setDescription('Get information about a user')
@@ -124,8 +108,6 @@ client.once('ready', async () => {
                     .setDescription('The user to get info about')
                     .setRequired(false)
             ),
-        
-        // Say command (bot repeats what you type)
         new SlashCommandBuilder()
             .setName('say')
             .setDescription('Make the bot say something')
@@ -134,8 +116,6 @@ client.once('ready', async () => {
                     .setDescription('What you want the bot to say')
                     .setRequired(true)
             ),
-        
-        // Purge command (delete messages from non-admins)
         new SlashCommandBuilder()
             .setName('purge')
             .setDescription('Delete all messages from users without admin role')
@@ -146,8 +126,6 @@ client.once('ready', async () => {
                     .setMinValue(1)
                     .setMaxValue(100)
             ),
-        
-        // NEW: Reaction roles setup command
         new SlashCommandBuilder()
             .setName('setup-reaction-roles')
             .setDescription('Setup reaction roles for the lowball role (Admin only)')
@@ -163,16 +141,18 @@ client.once('ready', async () => {
             )
     ];
 
-    try {
-        for (const command of commands) {
-            await client.application.commands.create(command);
+    // ⚡ Wrap the registration in an async IIFE so await works
+    (async () => {
+        try {
+            for (const command of commands) {
+                await client.application.commands.create(command);
+            }
+            console.log('All slash commands registered successfully!');
+        } catch (error) {
+            console.error('Error registering slash commands:', error);
         }
-        console.log('All slash commands registered successfully!');
-    } catch (error) {
-        console.error('Error registering slash commands:', error);
-    }
+    })();
 });
-
 // Handle slash command interactions
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
@@ -630,4 +610,5 @@ client.login(process.env.DISCORD_TOKEN);
 
 // Export for testing purposes
 module.exports = { client };
+
 
