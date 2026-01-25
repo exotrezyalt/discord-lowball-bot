@@ -598,5 +598,20 @@ client.on('error', error => {
 // Login to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);
 
+// Add after client.login()
+client.login(process.env.DISCORD_TOKEN)
+    .then(() => {
+        console.log('✅ Successfully logged in to Discord!');
+        console.log(`Bot username: ${client.user.tag}`);
+        console.log(`Bot ID: ${client.user.id}`);
+    })
+    .catch(error => {
+        console.error('❌ Failed to login to Discord:');
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Full error:', error);
+    });
+
 // Export for testing purposes
 module.exports = { client };
+
