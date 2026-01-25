@@ -595,47 +595,14 @@ client.on('error', error => {
     console.error('Discord client error:', error);
 });
 
-// Login to Discord with your client's token
-console.log('=== DISCORD BOT STARTUP ===');
-console.log('Environment check:');
-console.log('- DISCORD_TOKEN exists:', !!process.env.DISCORD_TOKEN);
-console.log('- DISCORD_TOKEN length:', process.env.DISCORD_TOKEN ? process.env.DISCORD_TOKEN.length : 0);
-console.log('- LOWBALL_CHANNEL_ID:', process.env.LOWBALL_CHANNEL_ID);
-console.log('- AUTO_DELETE_CHANNEL_ID:', process.env.AUTO_DELETE_CHANNEL_ID);
-
-// Add debug event listener
-client.on('debug', info => {
-    console.log('[DEBUG]:', info);
-});
-
-client.on('warn', info => {
-    console.warn('[WARN]:', info);
-});
-
-// Login to Discord with detailed error handling
-console.log('Attempting to login to Discord...');
+// Login to Discord
 client.login(process.env.DISCORD_TOKEN)
-    .then(() => {
-        console.log('✅ Login promise resolved successfully');
-    })
     .catch(error => {
-        console.error('❌ LOGIN FAILED!');
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error code:', error.code);
-        console.error('Full error:', error);
+        console.error('Failed to login:', error);
         process.exit(1);
     });
 
-// Timeout to detect if ready event never fires
-setTimeout(() => {
-    if (!client.isReady()) {
-        console.error('❌ TIMEOUT: Bot never became ready after 30 seconds');
-        console.error('WebSocket status:', client.ws.status);
-        console.error('This usually means token is invalid or intents are missing');
-    }
-}, 30000);
-
 // Export for testing purposes
 module.exports = { client };
+
 
