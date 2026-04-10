@@ -1,3 +1,4 @@
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const { Client, GatewayIntentBits, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const express = require('express');
 require('dotenv').config();
@@ -31,21 +32,6 @@ app.listen(PORT, () => {
     console.log(`Health endpoint: http://localhost:${PORT}/health`);
 });
 
-// Self-ping to prevent sleeping (backup method)
-const keepAlive = () => {
-    setInterval(() => {
-        if (process.env.NODE_ENV === 'production' && process.env.RENDER_SERVICE_URL) {
-            fetch(`${process.env.RENDER_SERVICE_URL}/health`)
-                .then(response => {
-                    console.log(`Self-ping successful: ${response.status}`);
-                })
-                .catch(error => {
-                    console.error('Self-ping failed:', error.message);
-                });
-        }
-    }, 14 * 60 * 1000); // Every 14 minutes
-};
-
 // Create a new client instance
 const client = new Client({ 
     intents: [
@@ -64,9 +50,7 @@ const LOWBALL_ROLE_NAME = process.env.LOWBALL_ROLE_NAME || 'lowball'; // Default
 client.once('ready', async () => {
     console.log(`Ready! Logged in as ${client.user.tag}`);
     
-    // Start keep-alive mechanism
-    keepAlive();
-    console.log('Keep-alive mechanism started');
+
     
     // Register ALL slash commands here
     const commands = [
