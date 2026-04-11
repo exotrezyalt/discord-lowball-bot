@@ -1,5 +1,3 @@
-const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
 const { Client, GatewayIntentBits, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const express = require('express');
 require('dotenv').config();
@@ -33,6 +31,21 @@ app.listen(PORT, () => {
     console.log(`Health endpoint: http://localhost:${PORT}/health`);
 });
 
+// Self-ping to prevent sleeping (backup method)
+const keepAlive = () => {
+    setInterval(() => {
+        if (process.env.NODE_ENV === 'production' && process.env.RENDER_SERVICE_URL) {
+            fetch(`${process.env.RENDER_SERVICE_URL}/health`)
+                .then(response => {
+                    console.log(`Self-ping successful: ${response.status}`);
+                })
+                .catch(error => {
+                    console.error('Self-ping failed:', error.message);
+                });
+        }
+    }, 14 * 60 * 1000); // Every 14 minutes
+};
+
 // Create a new client instance
 const client = new Client({ 
     intents: [
@@ -47,25 +60,13 @@ const LOWBALL_CHANNEL_ID = process.env.LOWBALL_CHANNEL_ID;
 const AUTO_DELETE_CHANNEL_ID = process.env.AUTO_DELETE_CHANNEL_ID; // New channel for auto-deleting non-admin messages
 const LOWBALL_ROLE_NAME = process.env.LOWBALL_ROLE_NAME || 'lowball'; // Default role name
 
-console.log("TOKEN EXISTS:", !!process.env.DISCORD_TOKEN);
-console.log("Attempting to login...");
-setTimeout(() => {
-    console.log("Still trying to login after 10 seconds...");
-}, 10000);
-
-const https = require('https');
-
-https.get('https://discord.com/api/v10', (res) => {
-    console.log('Discord API status:', res.statusCode);
-}).on('error', (err) => {
-    console.error('Discord API request failed:', err.message);
-});
-
 // When the client is ready, run this code
 client.once('ready', async () => {
     console.log(`Ready! Logged in as ${client.user.tag}`);
     
-
+    // Start keep-alive mechanism
+    keepAlive();
+    console.log('Keep-alive mechanism started');
     
     // Register ALL slash commands here
     const commands = [
@@ -603,5 +604,3 @@ client.login(process.env.DISCORD_TOKEN)
 
 // Export for testing purposes
 module.exports = { client };
-
-
