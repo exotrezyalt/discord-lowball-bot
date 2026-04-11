@@ -46,7 +46,10 @@ const AUTO_DELETE_CHANNEL_ID = process.env.AUTO_DELETE_CHANNEL_ID; // New channe
 const LOWBALL_ROLE_NAME = process.env.LOWBALL_ROLE_NAME || 'lowball'; // Default role name
 
 console.log("TOKEN EXISTS:", !!process.env.DISCORD_TOKEN);
-
+console.log("Attempting to login...");
+setTimeout(() => {
+    console.log("Still trying to login after 10 seconds...");
+}, 10000);
 // When the client is ready, run this code
 client.once('ready', async () => {
     console.log(`Ready! Logged in as ${client.user.tag}`);
