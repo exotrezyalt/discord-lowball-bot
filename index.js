@@ -45,6 +45,8 @@ const LOWBALL_CHANNEL_ID = process.env.LOWBALL_CHANNEL_ID;
 const AUTO_DELETE_CHANNEL_ID = process.env.AUTO_DELETE_CHANNEL_ID; // New channel for auto-deleting non-admin messages
 const LOWBALL_ROLE_NAME = process.env.LOWBALL_ROLE_NAME || 'lowball'; // Default role name
 
+console.log("TOKEN EXISTS:", !!process.env.DISCORD_TOKEN);
+
 // When the client is ready, run this code
 client.once('ready', async () => {
     console.log(`Ready! Logged in as ${client.user.tag}`);
