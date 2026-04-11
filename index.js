@@ -52,6 +52,15 @@ console.log("Attempting to login...");
 setTimeout(() => {
     console.log("Still trying to login after 10 seconds...");
 }, 10000);
+
+const https = require('https');
+
+https.get('https://discord.com/api/v10', (res) => {
+    console.log('Discord API status:', res.statusCode);
+}).on('error', (err) => {
+    console.error('Discord API request failed:', err.message);
+});
+
 // When the client is ready, run this code
 client.once('ready', async () => {
     console.log(`Ready! Logged in as ${client.user.tag}`);
